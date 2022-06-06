@@ -12,7 +12,7 @@ const clientID = `?client_id=${process.env.REACT_APP_ACCESS_KEY}`;
 function App() {
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [query, setQuery] = useState("");
 
   // calls the mainUrl for the api and receives the initial images
@@ -24,6 +24,9 @@ function App() {
     const urlPage = `&page=${page}`;
     const urlQuery = `&query=${query}`;
 
+    // checks the form use state variable, if there is a value then url is
+    // set to use the search api. If the form state variable is empty then
+    // use regualr api
     if (query) {
       url = `${searchUrl}${clientID}${urlPage}${urlQuery}`;
     } else {
@@ -34,7 +37,9 @@ function App() {
       const response = await fetch(url);
       const data = await response.json();
       setPhotos((oldData) => {
-        if (query) {
+        if (query && page === 1) {
+          return data.results;
+        } else if (query) {
           return [...oldData, ...data.results];
         } else {
           return [...oldData, ...data];
@@ -49,15 +54,21 @@ function App() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    fetchImages();
+    setPage(1);
   };
 
-  // useEffect for initial page load, also calls fetchImages function when page number changes
+  // useEffect for initial page load, also calls fetchImages function when
+  // page number changes
   useEffect(() => {
     fetchImages();
   }, [page]);
 
-  // useEffect for the continuous scroll feature
+  // useEffect for the continuous scroll feature.
+  // takes the height of the browser view and adds that to how much the
+  // page has scrolled.
+  // these two numbers combined are equal to the scroll height (the total
+  // height of the page). when these numbers are equal (or very close)
+  // update the page state variable (which triggers a rerender)
   useEffect(() => {
     const event = window.addEventListener("scroll", () => {
       if (
@@ -72,6 +83,7 @@ function App() {
     return () => window.removeEventListener("scroll", event);
   }, []);
 
+  // HTML part of the component.
   return (
     <main>
       <section className="search">
