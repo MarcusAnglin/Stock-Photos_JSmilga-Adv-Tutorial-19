@@ -13,4 +13,4 @@ The rest of this readme is about my expectations before and my experience after 
 
 #### what I expect.
 
-This tutorial creates a gallery page where it pulls images from an api by pexels, also rather than import pre-made continuous scroll library John creates one himself.
+This tutorial creates a gallery page where it pulls images from an api by Unsplash, also rather than import pre-made continuous scroll library John creates one himself.
