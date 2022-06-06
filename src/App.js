@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaSearch } from "react-icons/fa";
 import Photo from "./Photo";
 
@@ -12,8 +12,11 @@ const clientID = `?client_id=${process.env.REACT_APP_ACCESS_KEY}`;
 function App() {
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState([]);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [newImages, setNewImages] = useState(false);
+
+  const mounted = useRef(false);
 
   // calls the mainUrl for the api and receives the initial images
   // sets loading based on whether the api call was successful or not.
@@ -45,15 +48,27 @@ function App() {
           return [...oldData, ...data];
         }
       });
+      setNewImages(false);
       setLoading(false);
     } catch (error) {
+      setNewImages(false);
       setLoading(false);
       console.log(error);
     }
   };
 
+  // This function controls the forum submit. if the controlled input is
+  // empty the function does nothing and returns, if there is a value and
+  // it’s on the first page then the fetchImages function is called.
+  // fetchImages then decides what to do with the form value. after every
+  // valid search page is set to 1
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!query) return;
+    if (page === 1) {
+      fetchImages();
+      return;
+    }
     setPage(1);
   };
 
@@ -63,23 +78,27 @@ function App() {
     fetchImages();
   }, [page]);
 
-  // useEffect for the continuous scroll feature.
-  // takes the height of the browser view and adds that to how much the
-  // page has scrolled.
-  // these two numbers combined are equal to the scroll height (the total
-  // height of the page). when these numbers are equal (or very close)
-  // update the page state variable (which triggers a rerender)
+  // this useEffect is designed to do nothng on inital load. we need this effect to run after evething has loaded we do this with a useRef variable. the variable is initalized to false then on inital load it is set to true and the control is immediately returned. we only want to run this when newImages is changed.
   useEffect(() => {
-    const event = window.addEventListener("scroll", () => {
-      if (
-        !loading &&
-        window.innerHeight + window.scrollY >= document.body.scrollHeight - 1
-      ) {
-        setPage((oldPage) => {
-          return oldPage + 1;
-        });
-      }
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (!newImages) return;
+    if (loading) return;
+    setPage((oldPage) => {
+      return oldPage + 1;
     });
+  }, [newImages]);
+
+  const event = () => {
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
+      setNewImages(true);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", event);
     return () => window.removeEventListener("scroll", event);
   }, []);
 
